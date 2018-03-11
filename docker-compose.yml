@@ -1,0 +1,44 @@
+version: "3"
+services:
+  squid:
+    image: squid
+    container_name: compose_squid
+    environment:
+      - "DISK_CACHE_SIZE=5000"
+      - "MAX_CACHE_OBJECT=1000"
+      # - "SQUID_DIRECTIVES_ONLY=true"
+      # - "SQUID_DIRECTIVES='refresh_pattern . 0 0 1 refresh-ims'"
+    ports:
+      - "3128:3128"
+    restart: always
+    networks:
+      - default
+      - nointernet
+
+  gatekeeper:
+    image: beame/gatekeeper
+    command: 'npm config set proxy http://squid:3128 && npm config set https-proxy http://squid:3128 && sleep 999999'
+    container_name: compose_gatekeeper
+    environment:
+      - "http_proxy=http://squid:3128"
+      - "https_proxy=http://squid:3128"
+      - "ftp_proxy=http://squid:3128"
+    restart: always
+    networks:
+      - nointernet
+
+  insta-ssl:
+    image: beame/insta-ssl 
+    container_name: compose_instassl
+    command: 'npm config set proxy http://squid:3128 && npm config set https-proxy http://squid:3128 && sleep 999999'
+    environment:
+      - "http_proxy=http://squid:3128"
+      - "https_proxy=http://squid:3128"
+      - "ftp_proxy=http://squid:3128"
+    networks:
+      - nointernet
+
+networks:
+  default:
+  nointernet:
+    internal: true
